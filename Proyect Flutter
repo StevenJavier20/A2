@@ -1,0 +1,185 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Suma de Dos Números',
+      theme: ThemeData.dark().copyWith(
+        primaryColor: Colors.indigo,
+        scaffoldBackgroundColor: Colors.grey[900],
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            primary: Colors.indigo,
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+          labelStyle: TextStyle(color: Colors.white70),
+        ),
+      ),
+      home: const SumaNumerosScreen(),
+    );
+  }
+}
+
+class SumaNumerosScreen extends StatefulWidget {
+  const SumaNumerosScreen({super.key});
+
+  @override
+  State<SumaNumerosScreen> createState() => _SumaNumerosScreenState();
+}
+
+class _SumaNumerosScreenState extends State<SumaNumerosScreen>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController num1Controller = TextEditingController();
+  final TextEditingController num2Controller = TextEditingController();
+
+  double? resultado;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+  }
+
+  void sumar() {
+    String text1 = num1Controller.text.trim();
+    String text2 = num2Controller.text.trim();
+
+    if (text1.isEmpty || text2.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor ingrese ambos números'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    double? n1 = double.tryParse(text1);
+    double? n2 = double.tryParse(text2);
+
+    if (n1 == null || n2 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingrese valores numéricos válidos'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      resultado = n1 + n2;
+      num1Controller.clear();
+      num2Controller.clear();
+      _controller.forward(from: 0); // Animación al mostrar resultado
+    });
+  }
+
+  void reiniciar() {
+    setState(() {
+      resultado = null;
+      num1Controller.clear();
+      num2Controller.clear();
+      _controller.reset();
+    });
+  }
+
+  @override
+  void dispose() {
+    num1Controller.dispose();
+    num2Controller.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Suma de Dos Números'),
+        centerTitle: true,
+        backgroundColor: Colors.indigo,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: num1Controller,
+              decoration: const InputDecoration(
+                labelText: 'Primer número',
+              ),
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: num2Controller,
+              decoration: const InputDecoration(
+                labelText: 'Segundo número',
+              ),
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: sumar,
+                  child: const Text('Sumar', style: TextStyle(fontSize: 18)),
+                ),
+                ElevatedButton(
+                  onPressed: reiniciar,
+                  style: ElevatedButton.styleFrom(primary: Colors.redAccent),
+                  child:
+                      const Text('Reiniciar', style: TextStyle(fontSize: 18)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            if (resultado != null)
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Text(
+                    'Resultado: ${resultado!.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
